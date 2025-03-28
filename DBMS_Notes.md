@@ -793,3 +793,532 @@ INSERT INTO t_mult_uk VALUES (3, 20, 'd');  -- ❌ Fails (Duplicate c2)
 | **Index Type** | ✅ Creates a unique index | ✅ Creates a unique clustered index |
 
 ---
+
+### **📌 MySQL Constraints (6 Main Types)**  
+
+**Constraints** are rules applied to table columns to ensure data integrity and consistency.  
+
+---
+
+## **1️⃣ PRIMARY KEY**  
+- Ensures that a column (or set of columns) has **unique values** and **does not allow NULL**.  
+- Each table can have **only one** `PRIMARY KEY`.  
+- It automatically creates a **unique index**.  
+
+### **Syntax:**  
+```sql
+CREATE TABLE students (
+    student_id INT PRIMARY KEY,
+    name VARCHAR(50)
+);
+```
+✅ **Valid:**  
+```sql
+INSERT INTO students VALUES (1, 'Alice');
+INSERT INTO students VALUES (2, 'Bob');
+```
+❌ **Invalid (Duplicate student_id):**  
+```sql
+INSERT INTO students VALUES (1, 'Charlie');  -- Fails
+```
+❌ **Invalid (NULL student_id):**  
+```sql
+INSERT INTO students VALUES (NULL, 'David'); -- Fails
+```
+
+---
+
+## **2️⃣ UNIQUE KEY**  
+- Ensures that **all values in a column are unique** but allows **NULL values** (multiple `NULL`s are permitted).  
+
+### **Syntax:**  
+```sql
+CREATE TABLE employees (
+    emp_id INT UNIQUE,
+    name VARCHAR(50)
+);
+```
+✅ **Valid:**  
+```sql
+INSERT INTO employees VALUES (1, 'John');
+INSERT INTO employees VALUES (2, 'Jane');
+INSERT INTO employees VALUES (NULL, 'Alice');  -- NULL allowed
+INSERT INTO employees VALUES (NULL, 'Bob');    -- NULL allowed
+```
+❌ **Invalid (Duplicate emp_id):**  
+```sql
+INSERT INTO employees VALUES (1, 'Charlie');  -- Fails
+```
+
+---
+
+## **3️⃣ NOT NULL**  
+- Ensures that a column **cannot store NULL values**.  
+
+### **Syntax:**  
+```sql
+CREATE TABLE products (
+    product_id INT NOT NULL,
+    name VARCHAR(50)
+);
+```
+✅ **Valid:**  
+```sql
+INSERT INTO products VALUES (1, 'Laptop');
+INSERT INTO products VALUES (2, 'Phone');
+```
+❌ **Invalid (NULL value in product_id):**  
+```sql
+INSERT INTO products VALUES (NULL, 'Tablet'); -- Fails
+```
+
+---
+
+## **4️⃣ CHECK** *(Available in MySQL 8.0+)*  
+- Ensures that values meet a **specific condition** before being inserted/updated.  
+
+### **Syntax:**  
+```sql
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    quantity INT CHECK (quantity > 0)
+);
+```
+✅ **Valid:**  
+```sql
+INSERT INTO orders VALUES (1, 5);  -- Success
+```
+❌ **Invalid (quantity <= 0):**  
+```sql
+INSERT INTO orders VALUES (2, -3); -- Fails
+```
+
+---
+
+## **5️⃣ DEFAULT**  
+- Assigns a **default value** if no value is provided.  
+
+### **Syntax:**  
+```sql
+CREATE TABLE users (
+    id INT PRIMARY KEY,
+    role VARCHAR(20) DEFAULT 'User'
+);
+```
+✅ **Valid (Uses Default Value):**  
+```sql
+INSERT INTO users (id) VALUES (1);  -- role = 'User'
+```
+✅ **Valid (Overrides Default Value):**  
+```sql
+INSERT INTO users VALUES (2, 'Admin');  -- role = 'Admin'
+```
+
+---
+
+## **6️⃣ FOREIGN KEY**  
+- Enforces **referential integrity** by linking to a column in another table.  
+- Prevents inserting values that do not exist in the **parent table**.  
+
+### **Syntax:**  
+```sql
+CREATE TABLE departments (
+    dept_id INT PRIMARY KEY,
+    dept_name VARCHAR(50)
+);
+  
+CREATE TABLE employees (
+    emp_id INT PRIMARY KEY,
+    emp_name VARCHAR(50),
+    dept_id INT,
+    FOREIGN KEY (dept_id) REFERENCES departments(dept_id)
+);
+```
+✅ **Valid:**  
+```sql
+INSERT INTO departments VALUES (1, 'HR');
+INSERT INTO employees VALUES (101, 'Alice', 1);  -- Allowed (dept_id exists in departments)
+```
+❌ **Invalid (dept_id does not exist in departments):**  
+```sql
+INSERT INTO employees VALUES (102, 'Bob', 5); -- Fails
+```
+
+---
+
+### **🔹 Summary Table**
+
+| **Constraint** | **Description** | **Allows NULL?** | **Allows Duplicate?** |
+|--------------|---------------|----------------|----------------|
+| **PRIMARY KEY** | Uniquely identifies a row | ❌ No | ❌ No |
+| **UNIQUE** | Ensures all values are unique | ✅ Yes (Multiple `NULL`s allowed) | ❌ No (except `NULL`) |
+| **NOT NULL** | Prevents `NULL` values | ❌ No | ✅ Yes |
+| **CHECK** | Ensures values meet a condition | ✅ Yes (Unless restricted) | ✅ Yes |
+| **DEFAULT** | Assigns a default value if not provided | ✅ Yes | ✅ Yes |
+| **FOREIGN KEY** | Ensures referential integrity | ✅ Yes | ✅ Yes (If allowed by parent table) |
+
+---
+
+### **🔹 Key Differences: PRIMARY KEY vs UNIQUE KEY**
+| Feature | PRIMARY KEY | UNIQUE KEY |
+|---------|-------------|-------------|
+| **NULL Values** | ❌ Not Allowed | ✅ Allowed |
+| **Duplicates** | ❌ Not Allowed | ❌ Not Allowed |
+| **Multiple in Table?** | ❌ Only one | ✅ Multiple allowed |
+| **Index Type** | ✅ Clustered Index | ✅ Non-clustered Index |
+
+---
+
+
+### **📌 MySQL Notes: SQL Types, Transactions & Joins**  
+
+---
+
+## **1️⃣ SQL Types (Categories of SQL Commands)**  
+
+| **SQL Type** | **Description** | **Example Commands** |
+|-------------|----------------|------------------|
+| **DDL (Data Definition Language)** | Defines & modifies database structure | `CREATE`, `ALTER`, `DROP`, `TRUNCATE` |
+| **DML (Data Manipulation Language)** | Manipulates data in tables | `INSERT`, `UPDATE`, `DELETE` |
+| **DCL (Data Control Language)** | Controls user permissions & access | `GRANT`, `REVOKE` |
+| **TCL (Transaction Control Language)** | Manages transactions in SQL | `COMMIT`, `ROLLBACK`, `SAVEPOINT` |
+| **DRL (Data Retrieval Language)** | Fetches data from the database | `SELECT` |
+
+---
+
+## **2️⃣ Transactions: COMMIT & ROLLBACK**  
+Transactions allow executing multiple SQL statements as a **single unit of work**.  
+
+### **Transaction Flow**
+1. **Start Transaction:**  
+   ```sql
+   START TRANSACTION;
+   ```
+2. **Execute Queries:**  
+   ```sql
+   INSERT INTO table_name VALUES (1, 'Data');
+   UPDATE table_name SET column = 'new_value' WHERE id = 1;
+   ```
+3. **Decide on Transaction Outcome:**
+   - **Happy?** ✅ **Commit:**  
+     ```sql
+     COMMIT; -- Saves all changes permanently
+     ```
+     - **After `COMMIT`**, you **CANNOT ROLLBACK** changes.
+   - **Unhappy?** ❌ **Rollback:**  
+     ```sql
+     ROLLBACK; -- Reverts all changes since START TRANSACTION
+     ```
+     - **After `ROLLBACK`**, no changes are saved.
+
+---
+
+## **3️⃣ Joins in SQL**
+Joins are used to **combine rows** from multiple tables based on related columns.
+
+### **Types of Joins:**
+| **Join Type** | **Description** |
+|--------------|----------------|
+| **Cross Join** | Cartesian product of both tables (no condition). |
+| **Equi Join** | Uses `=` condition to match columns. |
+| **Inner Join** | Returns matching rows from both tables. |
+| **Outer Join** | Returns matched + unmatched rows (LEFT, RIGHT, FULL). |
+| **Left Outer Join** | All records from the left table + matching rows from right. |
+| **Right Outer Join** | All records from the right table + matching rows from left. |
+| **Full Outer Join** | Returns all rows from both tables (MySQL does not support directly). |
+| **Non-Equi Join** | Uses conditions like `<`, `>`, `!=` instead of `=`. |
+
+---
+
+## **4️⃣ SQL Join Examples**
+### **Table Creation**
+```sql
+CREATE TABLE t1 (
+    c1 INT,
+    c2 VARCHAR(5)
+);
+
+CREATE TABLE t2 (
+    c1 INT,
+    c3 VARCHAR(5)
+);
+```
+### **Insert Data**
+```sql
+INSERT INTO t1 VALUES (1, 'a'), (2, 'b'), (3, 'c');
+INSERT INTO t2 VALUES (3, 'x'), (4, 'y'), (5, 'z');
+```
+
+---
+
+### **❌ Ambiguous Column Error**
+```sql
+SELECT c2, c2, c3 FROM t1, t2; -- Error (Column c2 appears twice)
+```
+- To avoid this, use **table aliases or explicit table names**.
+
+---
+
+### **✅ Cross Join (Cartesian Product)**
+```sql
+SELECT * FROM t1 CROSS JOIN t2;
+```
+- Combines **all rows** from `t1` with **all rows** from `t2`.  
+- If `t1` has **3 rows** and `t2` has **3 rows**, the result will have **3 × 3 = 9 rows**.
+
+---
+
+### **✅ Correct Query Using Column Names**
+```sql
+SELECT t1.c1, t1.c2, t2.c3 FROM t1 CROSS JOIN t2;
+```
+- This prevents **ambiguity errors** and ensures clarity.
+
+---
+
+### **❌ Incorrect Query (Ambiguous Columns)**
+```sql
+SELECT c1, c2, c3 FROM t1 CROSS JOIN t2; -- Error: c1 exists in both tables
+```
+- Must specify `t1.c1` or `t2.c1` to avoid confusion.
+
+---
+
+## **🔹 Summary**
+| **Concept** | **Key Takeaways** |
+|------------|-----------------|
+| **SQL Types** | DDL, DML, DCL, TCL, DRL |
+| **Transaction Flow** | `START TRANSACTION` → Queries → `COMMIT` / `ROLLBACK` |
+| **COMMIT vs ROLLBACK** | `COMMIT` saves permanently, `ROLLBACK` undoes changes |
+| **Cross Join** | Produces Cartesian Product (no condition) |
+| **Ambiguous Column Issue** | Use table aliases to avoid errors |
+
+---
+
+
+# **📌 MySQL Set Operators: UNION, UNION ALL, INTERSECT, EXCEPT**  
+
+Set operators **combine the results** of two or more `SELECT` queries.  
+
+---
+
+## **1️⃣ UNION**  
+- **Removes duplicates** (returns only unique rows).  
+- Both queries must have the **same number of columns** with **compatible data types**.  
+
+### **Syntax:**  
+```sql
+SELECT column1, column2 FROM table1
+UNION
+SELECT column1, column2 FROM table2;
+```
+
+### **Example:**  
+```sql
+CREATE TABLE t1 (id INT, name VARCHAR(10));
+CREATE TABLE t2 (id INT, name VARCHAR(10));
+
+INSERT INTO t1 VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');
+INSERT INTO t2 VALUES (3, 'Charlie'), (4, 'David'), (5, 'Eve');
+
+SELECT * FROM t1
+UNION
+SELECT * FROM t2;
+```
+### **Output:**
+| id | name   |
+|----|--------|
+| 1  | Alice  |
+| 2  | Bob    |
+| 3  | Charlie |
+| 4  | David  |
+| 5  | Eve    |
+
+✅ **Duplicates are removed** (`Charlie` appears only once).  
+
+---
+
+## **2️⃣ UNION ALL**  
+- **Includes duplicates** (returns all records from both queries).  
+
+### **Syntax:**  
+```sql
+SELECT column1, column2 FROM table1
+UNION ALL
+SELECT column1, column2 FROM table2;
+```
+
+### **Example:**  
+```sql
+SELECT * FROM t1
+UNION ALL
+SELECT * FROM t2;
+```
+### **Output:**
+| id | name   |
+|----|--------|
+| 1  | Alice  |
+| 2  | Bob    |
+| 3  | Charlie |
+| 3  | Charlie |
+| 4  | David  |
+| 5  | Eve    |
+
+✅ **Duplicates are kept** (`Charlie` appears twice).  
+
+---
+
+## **3️⃣ INTERSECT (Not Natively Supported in MySQL)**  
+- Returns **only common records** between two queries.  
+
+### **Workaround Using `INNER JOIN`**
+```sql
+SELECT id, name FROM t1
+INNER JOIN t2 USING(id, name);
+```
+
+### **Output:**
+| id | name   |
+|----|--------|
+| 3  | Charlie |
+
+✅ **Only common rows are returned**.
+
+---
+
+## **4️⃣ EXCEPT (MySQL Equivalent: `LEFT JOIN WHERE NULL` or `NOT IN`)**  
+- Returns rows that exist in the **first query but not in the second**.  
+- MySQL does **not support `EXCEPT` directly**, but we can achieve the same using `LEFT JOIN WHERE NULL` or `NOT IN`.  
+
+### **Syntax Using `LEFT JOIN WHERE NULL`**
+```sql
+SELECT t1.id, t1.name 
+FROM t1
+LEFT JOIN t2 ON t1.id = t2.id AND t1.name = t2.name
+WHERE t2.id IS NULL;
+```
+### **Syntax Using `NOT IN`**
+```sql
+SELECT id, name FROM t1
+WHERE id NOT IN (SELECT id FROM t2);
+```
+
+### **Output:**
+| id | name   |
+|----|--------|
+| 1  | Alice  |
+| 2  | Bob    |
+
+✅ **Only records from `t1` that are not in `t2` are returned**.
+
+---
+
+## **🔹 Summary Table**
+
+| **Set Operator** | **Description** | **Removes Duplicates?** | **MySQL Support** |
+|----------------|----------------|------------------|------------------|
+| `UNION` | Combines results, removes duplicates | ✅ Yes | ✅ Yes |
+| `UNION ALL` | Combines results, keeps duplicates | ❌ No | ✅ Yes |
+| `INTERSECT` | Returns common records | ✅ Yes | ❌ No (Use `INNER JOIN`) |
+| `EXCEPT` | Returns records in first query but not second | ✅ Yes | ❌ No (Use `LEFT JOIN WHERE NULL` or `NOT IN`) |
+
+---
+
+## **🔹 Key Differences**
+| Feature | UNION | UNION ALL | INTERSECT | EXCEPT |
+|---------|-------|----------|-----------|--------|
+| **Removes Duplicates?** | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes |
+| **Performance** | Slower (sorting required) | Faster | Slower | Slower |
+| **Common Use Case** | Unique combined list | Full dataset (with duplicates) | Find common records | Find missing records |
+
+---
+
+# **📌 MySQL Aggregate Functions: COUNT, SUM, MAX, MIN, AVG**  
+
+Aggregate functions **perform calculations** on multiple rows and return a **single value**.  
+
+---
+
+## **1️⃣ COUNT Function**
+The `COUNT()` function counts the number of rows.  
+
+### **Basic Usage:**
+```sql
+SELECT COUNT(*) FROM t_def;  -- Counts all rows, including NULL values
+SELECT COUNT(1) FROM t_def;  -- Equivalent to COUNT(*)
+SELECT COUNT('a') FROM t_def;  -- Counts all rows, but ignores NULLs
+SELECT COUNT(2) FROM t_def;  -- Same as COUNT(*), as 2 is a constant
+```
+
+### **COUNT with Specific Column**
+```sql
+SELECT COUNT(id) FROM t_def;  -- Counts only non-NULL values in 'id' column
+SELECT COUNT(name) FROM t_def;  -- Counts non-NULL values in 'name' column
+```
+
+### **COUNT with DISTINCT Values**
+```sql
+SELECT COUNT(DISTINCT name) FROM t_def;  -- Counts unique values in 'name'
+SELECT COUNT(DISTINCT id) FROM t_def;  -- Counts unique values in 'id'
+```
+
+---
+
+## **2️⃣ SUM Function**
+The `SUM()` function calculates the **total sum** of a numeric column.
+
+### **Usage:**
+```sql
+SELECT SUM(id) FROM t_def;  -- Returns the total sum of 'id'
+SELECT SUM(DISTINCT id) FROM t_def;  -- Sums only distinct values in 'id'
+```
+✅ **Only works on numeric values**.  
+❌ **Ignores NULL values**.
+
+---
+
+## **3️⃣ MAX and MIN Functions**
+- `MAX()` returns the **largest** value.
+- `MIN()` returns the **smallest** value.
+- ✅ Works on **ALL DATA TYPES** (numeric, text, dates, etc.).
+
+### **Usage:**
+```sql
+SELECT MAX(id) FROM t_def;  -- Returns the highest ID
+SELECT MIN(id) FROM t_def;  -- Returns the lowest ID
+
+SELECT MAX(name) FROM t_def;  -- Returns the last name in alphabetical order
+SELECT MIN(name) FROM t_def;  -- Returns the first name in alphabetical order
+```
+📌 **Text comparison is based on ASCII values**.  
+
+---
+
+## **4️⃣ AVG Function**
+The `AVG()` function calculates the **average value** of a numeric column.
+
+### **Usage:**
+```sql
+SELECT AVG(id) FROM t_def;  -- Returns the average of 'id'
+SELECT AVG(DISTINCT id) FROM t_def;  -- Averages only distinct values in 'id'
+```
+✅ **Works only on numeric values**.  
+❌ **Ignores NULL values**.
+
+---
+
+## **🔹 Summary Table**
+
+| **Function** | **Description** | **Works on Data Type** | **NULL Handling** |
+|-------------|----------------|----------------|----------------|
+| `COUNT(*)` | Counts all rows | Any | Includes NULLs |
+| `COUNT(column)` | Counts non-NULL values | Any | Excludes NULLs |
+| `COUNT(DISTINCT column)` | Counts unique non-NULL values | Any | Excludes NULLs |
+| `SUM(column)` | Returns sum of values | Numeric only | Ignores NULLs |
+| `SUM(DISTINCT column)` | Returns sum of unique values | Numeric only | Ignores NULLs |
+| `MAX(column)` | Returns highest value | Any (numbers, text, dates) | Ignores NULLs |
+| `MIN(column)` | Returns lowest value | Any (numbers, text, dates) | Ignores NULLs |
+| `AVG(column)` | Returns average | Numeric only | Ignores NULLs |
+| `AVG(DISTINCT column)` | Returns average of unique values | Numeric only | Ignores NULLs |
+
+---
