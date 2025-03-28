@@ -284,3 +284,17 @@ Max and Min works with ALL DATA TYPES
 sum and avg only numeric values
 -----------------------------------------
 
+Sub Queries : when we use a query instead of a value in the main query then it is called as a subquery
+
+select * from t1 where c1 in (select c1 from );
+
+---------------------------------------------------------------------------------------------------------------------------------
+group clause                                                                                                                     
+
+select deptname,sum (salary) total_salary from emp join on emp.deptid=dept.deptid groupby deptname having sum(salary)>50000;
+
+-----------------------------------------------------------------------------------------------------------------------------------
+limit offset 
+-----------------------------------------------------------------------------------------------------------------------------------
+
+complete engineering [dbms except ER diagrams] in 3 hours  
