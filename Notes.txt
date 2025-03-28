@@ -106,3 +106,181 @@ insert into test_comp_uk values(2,2,'c'); --> error why
 --multiple unique
 
 create table t_mult_uk(c1 int unique, c2 int unique, c3 varchar(10));
+INSERT INTO t_mult_uk VALUES (1, 10, 'a');  --  Success
+INSERT INTO t_mult_uk VALUES (2, 20, 'b');  --  Success
+INSERT INTO t_mult_uk VALUES (1, 30, 'c');  --  Fails (Duplicate c1)
+INSERT INTO t_mult_uk VALUES (3, 20, 'd');  --  Fails (Duplicate c2)
+
+
+-----------
+create table t_1 (id int, name varchar(10));
+insert into t_1 values(1,'a'),(2,'b');
+
+alter table t_1 add constraint t_1_unique unique(id);
+use information_schema;
+
+select table_name from tables where table_schema = 'vita_2025'; 
+
+select table_name, CONSTRAINT_NAME from TABLE_CONSTRAINTS where CONSTRAINT_schema='vita_2025';
+
+use vita_2025;
+alter table t_mult_uk drop constraint c1; 
+
+----------------------------
+-- primary key
+
+create table t_pk (id int primary key, name varchar(10));
+insert into t_pk (1,'a'); -- works
+insert into t_pk (1,'b'); --fails
+insert into t_pk (null,'b'); --fails
+insert into t_pk(name) values('b'); --fails
+
+create table t_multi_pk (c1 int primary key, c2 int primary key); -- not allowed 
+
+create table test_comp_pk (c1 int , c2 int , primary key(c1,c2)); allowed
+
+alter table test_comp_pk drop primary key;
+
+create table t_nn (id int not null, name varchar(100));
+insert into t_nn values (null, 'a'); --fails
+-----------------------------------------------------------
+-- check constraint
+create table t_check (id int, salary int check (salary>100));
+insert into t_check values (1,1); -- fails
+insert into t_check values(1,null); -- works 
+
+----------------------------------------------------------
+forign key 
+
+create table t_parent(dept id int primary key, deptname varchar(10));
+
+create table t_child(eid int, ename varchar(10), deptid int, forign key fk1 (deptid) references t_parent (deptid));
+insert into t_child values (1,'a',1); -- fails
+
+insert into t_child values (1,'a',null); --works
+
+insert into t_parent values(1,"HR");
+insert into t_child values(1,'a',1); --works
+
+create table t_def(id int default 1, name varchar(10));
+insert into t_def(name) values('a');
+insert into t_def value (null, 'a');
+
+
+---SQL TYPES--
+DDL 
+DML
+DCL 
+TCL 
+DRL
+--------------
+
+start transaction;
+insert , update anything ...
+happy? commit ; commit karne pe no rollback;
+unhappy? rollback; if you do rollback , no commit 
+----------------------------------------------------
+
+joins 
+
+cross joins
+equi joins
+    inner joins
+    outer joins
+        left outer joins
+        right outer joins
+        full outer joins
+non equi joins
+
+-----------------------------------------------------
+
+create table t1(c1 int,c2 varchar(5));
+create table t2(c1 int,c3 varchar(5));
+
+insert into t1 values ((1,'a'),(2,'b'),(3,'c'));
+insert into t2 values ((3,'x'),(4,'y'),(5,'z'));
+
+select c2, c2,c3, from t1,t2; -- ambigious column error;
+--new/ansi syntax
+select * from t1 cross join t2;
+select t1,c1,c2,c3 from t1 cross join t2 ;
+select c1,c2,c3, from t1 cross join t2;-- ambigious column error
+
+---------------------------------------------------------
+-- inner join 
+-- old syntax 
+select * from t1,t2 
+where t1.c1=t2.c1;
+
+--new /ansi syntax
+
+select * from t1 inner join t2 on t1.c1 = t2.c1;
+
+select * from t1 join t2 on t1.c1=t2.c1;
+
+select * from t1 join t2 on t1.c1 = t2.c1;
+
+--left join 
+-- new / ansi  synt 
+
+select * from t1 left join t2 on t1.c1 = t2.c1;
+
+--right join 
+-- new / ansi  synt 
+
+select * from t1 right join t2 on t1.c1 = t2.c1;
+--------------------------------------------------------
+
+Set Operators 
+Union 
+Union all 
+
+create table a (id int);
+create table b (id int);
+
+insert into a values(1),(2),(3);
+insert into b values(3),(4),(5);
+
+select * from a
+union
+select * from b;
+
+select * from b 
+union 
+select * from a;
+
+
+-------
+
+work around of full join 
+
+select * from t1 left join t2 
+on t1.c1 = t2.c1
+union
+select * from t1 right join t2 
+on t1.c1 = t2.c1; 
+
+-----------------------------------
+
+Aggregate function
+Count Sum Max min avg 
+
+select count(*) from t_def;
+select count(1) from t_def;
+select count('a') from t_def;
+select count(2) from t_def;
+
+select count(id) from t_def;
+select count(name) from t_def;
+select count(distinct name) from t_def;
+select count(distinct id) from t_def;
+
+-----------------------------------------
+select sum(id) from t_def;
+select sum(distinct id) from t_def;
+
+Max and Min works with ALL DATA TYPES
+
+sum and avg only numeric values
+-----------------------------------------
+
